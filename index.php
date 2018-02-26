@@ -1,56 +1,35 @@
 <?php
+
 /**
- * @package    Grav.Core
+ * Make sure php is running
  *
- * @copyright  Copyright (C) 2014 - 2017 RocketTheme, LLC. All rights reserved.
- * @license    MIT License; see LICENSE file for details.
+ */
+if( false ){
+	?>
+	<!DOCTYPE html>
+	<html>
+	<head>
+	<meta charset="UTF-8" />
+	<title>Error: PHP is not running</title>
+	</head>
+	<body>
+	<h1><a href="https://www.typesettercms.com/">Typesetter CMS</a></h1>
+	<h2>Error: PHP is not running</h2>
+	<p>Typesetter requires that your web server is running PHP. Your server does not have PHP installed, or PHP is turned off.</p>
+	</body>
+	</html>
+	<?php
+}
+
+if( version_compare(phpversion(), '5.3.0', '<') ){
+	exit( 'Error: Typesetter CMS requires PHP 5.3+. This server is running PHP version ' . phpversion() );
+}
+
+/**
+ * See gpconfig.php for configuration options
+ *
  */
 
-namespace Grav;
-define('GRAV_PHP_MIN', '5.5.9');
+if( file_exists('gpconfig.php') ) require_once('gpconfig.php');
 
-// Ensure vendor libraries exist
-$autoload = __DIR__ . '/vendor/autoload.php';
-if (!is_file($autoload)) {
-    die("Please run: <i>bin/grav install</i>");
-}
-
-if (PHP_SAPI == 'cli-server') {
-    if (!isset($_SERVER['PHP_CLI_ROUTER'])) {
-        die("PHP webserver requires a router to run Grav, please use: <pre>php -S {$_SERVER["SERVER_NAME"]}:{$_SERVER["SERVER_PORT"]} system/router.php</pre>");
-    }
-}
-
-use Grav\Common\Grav;
-use RocketTheme\Toolbox\Event\Event;
-
-if (version_compare($ver = PHP_VERSION, $req = GRAV_PHP_MIN, '<')) {
-    die(sprintf('You are running PHP %s, but Grav needs at least <strong>PHP %s</strong> to run.', $ver, $req));
-}
-
-// Register the auto-loader.
-$loader = require_once $autoload;
-
-// Set timezone to default, falls back to system if php.ini not set
-date_default_timezone_set(@date_default_timezone_get());
-
-// Set internal encoding if mbstring loaded
-if (!extension_loaded('mbstring')) {
-    die("'mbstring' extension is not loaded.  This is required for Grav to run correctly");
-}
-mb_internal_encoding('UTF-8');
-
-// Get the Grav instance
-$grav = Grav::instance(
-    array(
-        'loader' => $loader
-    )
-);
-
-// Process the page
-try {
-    $grav->process();
-} catch (\Exception $e) {
-    $grav->fireEvent('onFatalException', new Event(array('exception' => $e)));
-    throw $e;
-}
+require_once('./include/main.php');
