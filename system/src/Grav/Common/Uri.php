@@ -58,11 +58,7 @@ class Uri
     protected function createFromEnvironment(array $env)
     {
         // Build scheme.
-        if (isset($env['HTTP_X_FORWARDED_PROTO'])) {
-            $this->scheme = $env['HTTP_X_FORWARDED_PROTO'];
-        } elseif (isset($env['X-FORWARDED-PROTO'])) {
-            $this->scheme = $env['X-FORWARDED-PROTO'];
-        } elseif (isset($env['REQUEST_SCHEME'])) {
+        if (isset($env['REQUEST_SCHEME'])) {
             $this->scheme = $env['REQUEST_SCHEME'];
         } else {
             $https = isset($env['HTTPS']) ? $env['HTTPS'] : '';
@@ -86,15 +82,7 @@ class Uri
         $this->host = $this->validateHostname($hostname) ? $hostname : 'unknown';
 
         // Build port.
-        if (isset($env['HTTP_X_FORWARDED_PORT'])) {
-            $this->port = (int)$env['HTTP_X_FORWARDED_PORT'];
-        } elseif (isset($env['X-FORWARDED-PORT'])) {
-            $this->port = (int)$env['X-FORWARDED-PORT'];
-        } elseif (isset($env['SERVER_PORT'])) {
-            $this->port = (int)$env['SERVER_PORT'];
-        } else {
-            $this->port = null;
-        }
+        $this->port = isset($env['SERVER_PORT']) ? (int)$env['SERVER_PORT'] : null;
         if ($this->hasStandardPort()) {
             $this->port = null;
         }
@@ -953,7 +941,7 @@ class Uri
         }
 
         // handle absolute URLs
-        if (is_array($url) && !$external && ($absolute === true || $grav['config']->get('system.absolute_urls', false))) {
+        if (!$external && ($absolute === true || $grav['config']->get('system.absolute_urls', false))) {
 
             $url['scheme'] = $uri->scheme(true);
             $url['host'] = $uri->host();
@@ -995,16 +983,15 @@ class Uri
             }
         }
 
-        // Handle route only
-        if ($route_only) {
-            $url_path = str_replace($base_url, '', $url_path);
-        }
-
         // transform back to string/array as needed
         if (is_array($url)) {
             $url['path'] = $url_path;
         } else {
             $url = $url_path;
+        }
+
+        if ($route_only) {
+            $url = str_replace($base_url, '', $url);
         }
 
         return $url;
